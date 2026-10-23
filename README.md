@@ -20,3 +20,6 @@ python -m venv .venv
 # Windows:   .venv\Scripts\activate
 pip install -r requirements.txt
 ```
+
+## Data and attribution
+Dataset: Bank Account Fraud (BAF) suite, Base variant. Jesus, Pombal, Alves, Cruz, Saleiro, Ribeiro, Gama, Bizarro (2022), "Turning the Tables: Biased, Imbalanced, Dynamic Tabular Datasets for ML Evaluation", NeurIPS 2022 Datasets and Benchmarks. License: CC BY-NC-ND 4.0. The data is synthetic; the authors state it should not be used to build real-world fraud detection. This project is a methodology exercise on benchmark data, not a deployable fraud system.
