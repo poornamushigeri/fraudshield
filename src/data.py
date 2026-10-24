@@ -42,3 +42,14 @@ def split_by_month(df: pd.DataFrame):
     valid = df[df[SPLIT_COL] == 5]
     test = df[df[SPLIT_COL] >= 6]
     return train, valid, test
+
+
+EXCLUDED_FROM_MAIN = ["days_since_request"]  # measurement time unclear (see protocol amendment)
+
+
+def feature_frame(df: pd.DataFrame, include_days_since_request: bool = False) -> pd.DataFrame:
+    """Model inputs: everything except the label, the split column and excluded columns."""
+    drop = [LABEL, SPLIT_COL]
+    if not include_days_since_request:
+        drop += EXCLUDED_FROM_MAIN
+    return df.drop(columns=drop)
