@@ -26,3 +26,14 @@ Scores under-predict fraud in the top deciles (top decile: 5.7% predicted vs 7.8
 ## Decision
 Operating point: review the top 5% of applications by score. Sensitivity reported at 2% and 10%.
 Limitations: costs are assumptions, one validation month, synthetic data, no claim of real-world savings.
+
+## Fairness check (age groups, validation month, review budget 5%)
+
+| Group | Fraud rate | Flagged share | False-positive rate | Recall |
+|---|---|---|---|---|
+| Under 50 | 0.95% | 4.0% | 3.64% | 44.5% |
+| 50 and over | 2.27% | 9.6% | 8.37% | 62.8% |
+
+customer_age is excluded from the model, yet honest applicants aged 50+ are flagged about 2.3 times as often. The flag rate tracks the difference in base fraud rates (about 2.4 times), and other features act as proxies for age. Flags are more often correct for the 50+ group (precision TODO from the cell above).
+
+Because base rates differ, equal false-positive rates and equal flag reliability cannot both be achieved. This project reports the gap and does not apply group-specific cutoffs, which would use age explicitly in the decision. Next step: test whether removing proxy features narrows the gap without a meaningful accuracy cost.

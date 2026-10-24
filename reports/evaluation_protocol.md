@@ -57,3 +57,4 @@ Not used as headline metrics: accuracy and ROC-AUC (misleading when fraud is abo
 
 ## Amendments
 - Datasheet review (before any model was trained): intended_balcon_amount negatives are missing values per the BAF datasheet, so it is handled like the other missing-code columns. days_since_request is excluded from the main model because its measurement time is unclear, and is tested as a sensitivity run.
+- Before any test-set evaluation: the final model (gradient-boosted trees, no age, no days_since_request) will be retrained on months 0-5 with the hyperparameters chosen on validation, then evaluated once on months 6-7. The operating point stays a review budget of 5%.
