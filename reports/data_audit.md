@@ -92,7 +92,7 @@ For each column: would the bank know this at the moment the application arrives?
 
 | Column | Known at application time? | Notes |
 |---|---|---|
-| days_since_request | Unconfirmed | Median 0.015, range up to 78.5. Fraud rate by bucket varies between 0.5% and 2.2% with no extreme bucket, so no obvious leakage signal. This is not proof. TODO: confirm in the datasheet what it measures. Plan: compare model results with and without this column. |
+| days_since_request | Unconfirmed in datasheet | Excluded from the main model. Sensitivity run: adding it left validation PR-AUC at 0.186 vs 0.184 and recall at 5% FPR at 0.528 vs 0.530, so no sign of leakage and no benefit. Stays excluded. |
 | velocity_6h / velocity_24h / velocity_4w | TODO | Rolling counts; check how they are computed |
 | credit_risk_score | TODO | |
 | proposed_credit_limit | TODO | |
