@@ -4,4 +4,7 @@ matplotlib
 scikit-learn
 jupyter
 ipykernel
-
+fastapi
+uvicorn
+httpx
+pydantic
