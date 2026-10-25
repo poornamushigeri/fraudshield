@@ -63,6 +63,7 @@ Excluding age does not remove the disparity: honest applicants aged 50+ are flag
 - Scores under-predict fraud (mean predicted 1.21% vs actual 1.40%).
 - Recall at 1% FPR and in the top 1% were about 3 points below validation; no intervals are available and the difference is unexplained.
 - Provenance: TODO (commit hash and the note about the single evaluation, from the protocol amendment).
+- Provenance: the test months were evaluated once; all model, feature and threshold decisions were committed before the results (see the "Test-set evaluation" amendment in `evaluation_protocol.md`, and commit 3616fdd).
 
 ## 9. Monitoring plan
 TODO (Week 3-4, own words): which feature drift measure, which months, what triggers retraining, and how drift differs from degraded accuracy.
