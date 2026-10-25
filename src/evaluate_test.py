@@ -1,4 +1,7 @@
-"""One-time evaluation on the test months (6-7).   Usage: python -m src.evaluate_test"""
+"""Evaluate on the test months (6-7) ONCE.
+Usage:  python -m src.evaluate_test --dry-run   (code check on month 5, writes nothing)
+        python -m src.evaluate_test             (the real, single evaluation)
+"""
 import json
 import sys
 from pathlib import Path
@@ -29,9 +32,13 @@ def main(version: str = "v1", dry_run: bool = False) -> None:
     y = test[LABEL].to_numpy()
 
     out = {
-        "model_version": version, "test_months": "6-7", "rows": int(len(y)),
-        "fraud_rate": float(y.mean()), "mean_predicted": float(score.mean()),
-        "metrics": evaluate(y, score), "by_month": {},
+        "model_version": version,
+        "evaluated_months": "5 (DRY RUN, in-sample, ignore the numbers)" if dry_run else "6-7",
+        "rows": int(len(y)),
+        "fraud_rate": float(y.mean()),
+        "mean_predicted": float(score.mean()),
+        "metrics": evaluate(y, score),
+        "by_month": {},
     }
     months = test[SPLIT_COL].to_numpy()
     for m in sorted(set(months)):
@@ -56,7 +63,8 @@ def main(version: str = "v1", dry_run: bool = False) -> None:
     for name, mask in [("under_50", ~older), ("50_plus", older)]:
         neg, pos = mask & (y == 0), mask & (y == 1)
         groups[name] = {
-            "rows": int(mask.sum()), "fraud_rate": float(y[mask].mean()),
+            "rows": int(mask.sum()),
+            "fraud_rate": float(y[mask].mean()),
             "flagged_share": float(flagged[mask].mean()),
             "false_positive_rate": float(flagged[neg].sum() / neg.sum()),
             "recall": float(flagged[pos].sum() / pos.sum()),
@@ -64,13 +72,12 @@ def main(version: str = "v1", dry_run: bool = False) -> None:
         }
     out["fairness_at_5pct_budget"] = groups
 
-    
-    if dry_run:
-      print("DRY RUN on month 5 (in-sample for this model; checks the code only, do not use these numbers)")
-      print(json.dumps(out, indent=2))
-      return
-    RESULTS.write_text(json.dumps(out, indent=2))
     print(json.dumps(out, indent=2))
+    if dry_run:
+        print("\nDRY RUN: nothing was written. These numbers are in-sample and must not be used.")
+        return
+    RESULTS.write_text(json.dumps(out, indent=2))
+    print(f"\nwritten to {RESULTS}")
 
 
 if __name__ == "__main__":
