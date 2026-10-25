@@ -17,13 +17,13 @@ BUDGET = 0.05
 B = 300
 
 
-def main(version: str = "v1") -> None:
-    if RESULTS.exists():
+def main(version: str = "v1", dry_run: bool = False) -> None:
+    if RESULTS.exists() and not dry_run:
         sys.exit(f"{RESULTS.name} already exists: the test set has already been evaluated. "
                  "Re-running breaks the protocol. Add an amendment explaining why, then delete the file on purpose.")
 
     df = clean(load_raw(ROOT / "data" / "Base.csv"))
-    test = df[df[SPLIT_COL] >= 6]
+    test = df[df[SPLIT_COL] == 5] if dry_run else df[df[SPLIT_COL] >= 6]
     model = joblib.load(ROOT / "models" / f"hgb_{version}.joblib")
     score = model.predict_proba(model_features(test))[:, 1]
     y = test[LABEL].to_numpy()
@@ -64,9 +64,14 @@ def main(version: str = "v1") -> None:
         }
     out["fairness_at_5pct_budget"] = groups
 
+    
+    if dry_run:
+      print("DRY RUN on month 5 (in-sample for this model; checks the code only, do not use these numbers)")
+      print(json.dumps(out, indent=2))
+      return
     RESULTS.write_text(json.dumps(out, indent=2))
     print(json.dumps(out, indent=2))
 
 
 if __name__ == "__main__":
-    main()
+    main(dry_run="--dry-run" in sys.argv)
