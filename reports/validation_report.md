@@ -12,7 +12,8 @@ The model ranks online bank-account applications so analysts review the highest-
 - Details: `data_audit.md`.
 
 ## 3. Evaluation protocol
-Time-based split: train months 0-4, validation month 5, test months 6-7. The final model was retrained on months 0-5 and evaluated once on the test months. Primary metrics: PR-AUC, recall at fixed false-positive rate, recall at a fixed review budget, with bootstrap 95% intervals. Protocol and amendments: `evaluation_protocol.md`.
+Time-based split: train months 0-4, validation month 5, test months 6-7. The final model was retrained on months 0-5 and evaluated once on the test months. Primary metrics: PR-AUC, recall at fixed false-positive rate, recall at a fixed review budget, with bootstrap 95% intervals. Protocol and amendments: `evaluation_protocol.md`
+- Provenance: the test months were evaluated once; all model, feature and threshold decisions were committed before the results (see the "Test-set evaluation" amendment in `evaluation_protocol.md`, and commit 3616fdd)..
 
 ## 4. Model comparison (validation month, models trained on months 0-4)
 | Model | PR-AUC | Recall at 5% FPR |
