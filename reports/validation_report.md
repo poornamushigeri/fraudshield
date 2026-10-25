@@ -76,3 +76,5 @@ TODO (own words). Cover: real labels and their delay, pre-rejected applicants, u
 - Costs are hypothetical; no savings are claimed.
 - Intervals reflect sampling variation only, not fitting randomness.
 - One model family comparison, one test period.
+
+- The API returns reasons only for medium and high risk bands. For low-risk applications the strongest positive contributions are weak and could mislead an analyst, so the list is empty.

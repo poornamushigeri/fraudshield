@@ -1,1 +1,2 @@
-“first test run happened accidentally; the guard stopped a second run, and I disclosed it”
+1.first test run happened accidentally; the guard stopped a second run, and I disclosed it
+2.Return reasons only when there’s something to investigate; showing weak reasons for low-risk cases invites false suspicion, and skipping them makes the common case faster too.
