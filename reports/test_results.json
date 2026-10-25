@@ -1,0 +1,63 @@
+{
+  "model_version": "v1",
+  "test_months": "6-7",
+  "rows": 205011,
+  "fraud_rate": 0.014038271117159567,
+  "mean_predicted": 0.012111316871430236,
+  "metrics": {
+    "pr_auc": 0.1866223510128757,
+    "recall_at_fpr_5pct": 0.5399583043780403,
+    "recall_at_fpr_1pct": 0.24426685198054204,
+    "recall_at_top_1pct": 0.21125781792911744,
+    "recall_at_top_5pct": 0.5107713690062543,
+    "brier": 0.012476387195265079
+  },
+  "by_month": {
+    "6": {
+      "fraud_rate": 0.013405073589231566,
+      "pr_auc": 0.17172282474324624,
+      "recall_at_fpr_5pct": 0.5158620689655172,
+      "recall_at_fpr_1pct": 0.23448275862068965,
+      "recall_at_top_1pct": 0.20482758620689656,
+      "recall_at_top_5pct": 0.4868965517241379,
+      "brier": 0.012048658837109462
+    },
+    "7": {
+      "fraud_rate": 0.014745515938167962,
+      "pr_auc": 0.20585691762619457,
+      "recall_at_fpr_5pct": 0.5679271708683473,
+      "recall_at_fpr_1pct": 0.2605042016806723,
+      "recall_at_top_1pct": 0.21778711484593838,
+      "recall_at_top_5pct": 0.538515406162465,
+      "brier": 0.012954134900777885
+    }
+  },
+  "bootstrap_95": {
+    "pr_auc": [
+      0.1721,
+      0.2011
+    ],
+    "recall_at_fpr_5pct": [
+      0.5211,
+      0.5594
+    ]
+  },
+  "fairness_at_5pct_budget": {
+    "under_50": {
+      "rows": 171232,
+      "fraud_rate": 0.011031816482900393,
+      "flagged_share": 0.04037212670528873,
+      "false_positive_rate": 0.035631824167518,
+      "recall": 0.4653255690841715,
+      "precision": 0.12715174309272384
+    },
+    "50_plus": {
+      "rows": 33779,
+      "fraud_rate": 0.02927854584209124,
+      "flagged_share": 0.09881879274105214,
+      "false_positive_rate": 0.08377554132357426,
+      "recall": 0.5975733063700708,
+      "precision": 0.17705212702216896
+    }
+  }
+}
