@@ -1,6 +1,7 @@
 """Send a real application (months 0-5 only) to the running API and print the response.
 Usage: python score_example.py high|medium|low
 Start the server first, in another terminal:  uvicorn src.api:app --reload"""
+import time
 import json
 import sys
 
@@ -29,6 +30,7 @@ idx = pool.index[0]
 print("actual label in the data (fraud_bool):", int(pool.loc[idx, "fraud_bool"]))
 record = to_record(pool.drop(columns="score").loc[idx].to_dict())
 
+
+t0 = time.perf_counter()
 r = httpx.post("http://127.0.0.1:8000/score", json=record, timeout=60)
-print("HTTP", r.status_code)
-print(json.dumps(r.json(), indent=2))
+print(f"HTTP {r.status_code} in {time.perf_counter() - t0:.3f} s")
