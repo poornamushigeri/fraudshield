@@ -1,14 +1,19 @@
 """FraudShield scoring API.   Run:  uvicorn src.api:app --reload"""
 import json
+import logging
 from contextlib import asynccontextmanager
 from typing import Literal
 
 from fastapi import FastAPI
 from pydantic import BaseModel
+from sqlalchemy import text
 
+from src.db import init_db, make_engine, register_model, save_prediction
 from src.explain import Explainer
 from src.schemas import Application, to_frame
 from src.serve import MODEL_DIR, load_model, prepare
+
+log = logging.getLogger("fraudshield")
 
 VERSION = "v1"
 NOTE = ("risk_score ranks applications and is not a calibrated probability of fraud. "
@@ -28,10 +33,15 @@ def band(score: float, cutoffs: dict) -> str:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     model, meta = load_model(VERSION)
-    app.state.model, app.state.meta = model, meta
-    app.state.cutoffs = json.loads((MODEL_DIR / f"bands_{VERSION}.json").read_text())["cutoffs"]
+    cutoffs = json.loads((MODEL_DIR / f"bands_{VERSION}.json").read_text())["cutoffs"]
+    engine = make_engine()
+    init_db(engine)                       # fails loudly at startup if the database is unreachable
+    register_model(engine, meta, cutoffs)
+    app.state.model, app.state.meta, app.state.cutoffs = model, meta, cutoffs
     app.state.explainer = Explainer.load(model, VERSION)
+    app.state.engine = engine
     yield
+    engine.dispose()
 
 
 app = FastAPI(
@@ -49,6 +59,7 @@ class Reason(BaseModel):
 
 class ScoreResponse(BaseModel):
     model_version: str
+    prediction_id: int | None
     risk_score: float
     risk_band: Literal["high", "medium", "low"]
     review_recommended: bool
@@ -59,23 +70,36 @@ class ScoreResponse(BaseModel):
 @app.get("/health")
 def health():
     m = app.state.meta
-    return {"status": "ok", "model_version": m["version"],
-            "trained_at_utc": m["trained_at_utc"], "train_months": m["train_months"]}
+    try:
+        with app.state.engine.connect() as c:
+            c.execute(text("SELECT 1"))
+        database = "ok"
+    except Exception:
+        database = "unavailable"
+    return {"status": "ok" if database == "ok" else "degraded", "database": database,
+            "model_version": m["version"], "trained_at_utc": m["trained_at_utc"],
+            "train_months": m["train_months"]}
 
 
 @app.post("/score", response_model=ScoreResponse)
 def score(application: Application):
     X = prepare(to_frame([application]), app.state.meta["features"])
-    s = float(app.state.model.predict_proba(X)[0, 1])
+    s = round(float(app.state.model.predict_proba(X)[0, 1]), 5)
     b = band(s, app.state.cutoffs)
-    # Reasons only matter when there is something to look at. Skipping them for low risk
+    # Reasons only matter when there is something to look at; skipping them for low risk
     # also skips the SHAP computation, which makes the common case faster.
     reasons = app.state.explainer.top_reasons(X)[0] if b != "low" else []
+
+    # If storing fails, the analyst still gets the score, but the failure is logged and
+    # prediction_id is null so a missing record is visible, not silent.
+    prediction_id = None
+    try:
+        prediction_id = save_prediction(
+            app.state.engine, model_version=app.state.meta["version"], risk_score=s, risk_band=b,
+            review_recommended=(b == "high"), application=application.model_dump(), reasons=reasons)
+    except Exception:
+        log.exception("could not store prediction")
+
     return ScoreResponse(
-        model_version=app.state.meta["version"],
-        risk_score=round(s, 5),
-        risk_band=b,
-        review_recommended=(b == "high"),
-        reasons=reasons,
-        note=NOTE,
-    )
+        model_version=app.state.meta["version"], prediction_id=prediction_id, risk_score=s,
+        risk_band=b, review_recommended=(b == "high"), reasons=reasons, note=NOTE)

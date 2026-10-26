@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgres:16
+    container_name: fraudshield-db
+    environment:
+      POSTGRES_USER: fraudshield
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fraudshield_dev}
+      POSTGRES_DB: fraudshield
+    ports:
+      - "127.0.0.1:5433:5432"   # 5433 on your machine, because 5432 is already in use here      - "127.0.0.1:5433:5432"   # 5433 on your machine, because 5432 is already in use here   # reachable from your own machine only
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fraudshield -d fraudshield"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:

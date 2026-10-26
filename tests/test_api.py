@@ -2,9 +2,11 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 
 from src.api import app, band
 from src.data import clean, load_raw
+from src.db import Prediction, make_engine
 from src.model import model_features
 from src.serve import load_model
 from tests.test_schema import to_record
@@ -32,7 +34,8 @@ def sample():
 def test_health(client):
     r = client.get("/health")
     assert r.status_code == 200
-    assert r.json()["model_version"] == "v1"
+    body = r.json()
+    assert body["model_version"] == "v1" and body["database"] == "ok"
 
 
 def test_score_matches_offline_prediction(client, sample):
@@ -65,8 +68,7 @@ def test_band_cutoffs():
 def test_reasons_only_for_medium_and_high(client):
     raw = load_raw(DATA)
     train_months = raw[raw["month"] <= 5]  # never the test months
-    sample = (train_months[train_months["fraud_bool"] == 1].sample(40, random_state=7)
-              .to_dict("records")
+    sample = (train_months[train_months["fraud_bool"] == 1].sample(40, random_state=7).to_dict("records")
               + train_months.sample(40, random_state=8).to_dict("records"))
     bands = set()
     for rec in sample:
@@ -76,4 +78,26 @@ def test_reasons_only_for_medium_and_high(client):
             assert body["reasons"] == []
         else:
             assert len(body["reasons"]) <= 3
-    assert "low" in bands and bands != {"low"} 
+    assert "low" in bands and bands != {"low"}  # the test saw both kinds of case
+
+
+def test_every_scored_application_is_stored(client, sample):
+    rec = to_record(sample.to_dict("records")[0])
+    body = client.post("/score", json=rec).json()
+    assert isinstance(body["prediction_id"], int)
+    with Session(make_engine()) as s:     # same throwaway test database the API used
+        row = s.get(Prediction, body["prediction_id"])
+        assert row.model_version == "v1"
+        assert row.risk_score == pytest.approx(body["risk_score"])
+        assert row.risk_band == body["risk_band"]
+        assert row.application == rec          # exactly what was sent, nulls included
+        assert row.outcome is None
+
+
+def test_rejected_requests_are_not_stored(client, sample):
+    with Session(make_engine()) as s:
+        before = s.query(Prediction).count()
+    rec = to_record(sample.to_dict("records")[0])
+    assert client.post("/score", json={**rec, "payment_type": "ZZ"}).status_code == 422
+    with Session(make_engine()) as s:
+        assert s.query(Prediction).count() == before
