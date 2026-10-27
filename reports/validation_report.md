@@ -78,3 +78,25 @@ TODO (own words). Cover: real labels and their delay, pre-rejected applicants, u
 - One model family comparison, one test period.
 
 - The API returns reasons only for medium and high risk bands. For low-risk applications the strongest positive contributions are weak and could mislead an analyst, so the list is empty.
+
+## 9. Monitoring plan
+
+### What was observed (months 0-7, benchmark data)
+- Input drift: PSI against months 0-5 above 0.25 for 5 of 33 features in month 7. The largest are rolling-window features: velocity_4w (3.70), velocity_24h (2.32), velocity_6h (1.23), zip_count_4w (0.79), date_of_birth_distinct_emails_4w (0.43).
+- The drift is a steady monthly decline (velocity_6h mean 7,437 in month 0 to 3,605 in month 7; zip_count_4w 2,169 to 986), including inside the training months. Cause not explained by the dataset.
+- Score drift: 6.45% (month 6) and 5.70% (month 7) of applications scored above the "high" cutoff, against a 5% design.
+- Performance: recall at 5% FPR 0.516 (month 6) and 0.568 (month 7); no degradation (see section 8).
+- Reliance: removing the three velocity features changed validation PR-AUC from 0.1844 to 0.1852 (no change within noise); removing all six window features lowered it to 0.1699.
+- Interpretation: TODO (your words) why large input drift did not degrade performance here, and what this does not prove.
+
+### What is monitored, how often, and what triggers action
+TODO (your words). Cover each of: input drift (which features, which reference, PSI thresholds as rules of thumb only), share above the risk cutoffs, performance on labelled outcomes, and data quality (unknown-value rates, new categories).
+| Signal | Frequency | Trigger | Action |
+|---|---|---|---|
+| TODO | | | |
+
+### Drift versus degradation
+TODO (your words): why input drift is an early warning that needs no labels, why it does not by itself mean accuracy has dropped, and why labels arrive late.
+
+### Candidate improvement
+A model without the velocity features matched the final model on validation and removes the largest source of drift. It was not adopted: v1 is frozen and the test months have been used. Evaluate on fresh months before any switch.
