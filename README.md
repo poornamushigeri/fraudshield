@@ -36,9 +36,14 @@ Dataset: Bank Account Fraud (BAF) suite, Base variant. Jesus, Pombal, Alves, Cru
 95% bootstrap intervals and the model-selection reasoning are in `reports/model_selection.md`.
 The test months (6-7) are evaluated once; results go in `reports/test_results.json`.
 
-## How to run
 
+ ## How to run
     pip install -r requirements.txt
-    python -m src.build_dataset
-    python -m src.train
+    python -m src.build_dataset        # clean data
+    python -m src.train                # only for a NEW model version; v1 is frozen, retraining must save as v2
+    python -m src.bands                # risk-band cutoffs
+    python -m src.background           # background sample for reason codes
+    docker compose up -d --build       # PostgreSQL + the API at http://127.0.0.1:8000/docs
     python -m pytest -q
+
+The trained model files live in `models/` (not in Git) and are mounted into the API container.

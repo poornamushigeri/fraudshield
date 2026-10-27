@@ -1,0 +1,17 @@
+cloudpickle==3.1.2
+fastapi==0.162.0
+httpx==0.28.1
+joblib==1.6.0
+numpy==2.5.4
+pandas==3.1.0
+psycopg==3.3.6
+psycopg-binary==3.3.6
+pydantic==2.14.1
+scikit-learn==1.9.1
+scipy==1.18.1
+shap==0.54.1
+slicer==0.0.8
+SQLAlchemy==2.1.6
+starlette==1.10.0
+threadpoolctl==3.7.0
+uvicorn==0.54.0

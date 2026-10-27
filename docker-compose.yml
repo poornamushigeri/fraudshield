@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fraudshield_dev}
       POSTGRES_DB: fraudshield
     ports:
-      - "127.0.0.1:5433:5432"   # 5433 on your machine, because 5432 is already in use here      - "127.0.0.1:5433:5432"   # 5433 on your machine, because 5432 is already in use here   # reachable from your own machine only
+      - "127.0.0.1:5433:5432"   # 5433 on your machine, because 5432 is already in use here
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -15,6 +15,26 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+
+  api:
+    build: .
+    container_name: fraudshield-api
+    environment:
+      # inside the Docker network the database is "db" on its own port 5432
+      DATABASE_URL: postgresql+psycopg://fraudshield:${POSTGRES_PASSWORD:-fraudshield_dev}@db:5432/fraudshield
+    volumes:
+      - ./models:/app/models:ro   # the model files, read-only
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 40s
 
 volumes:
   pgdata:

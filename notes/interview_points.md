@@ -1,2 +1,3 @@
 1.first test run happened accidentally; the guard stopped a second run, and I disclosed it
 2.Return reasons only when there’s something to investigate; showing weak reasons for low-risk cases invites false suspicion, and skipping them makes the common case faster too.
+3.The features with the biggest drift were ones the model barely used, which is why performance held. I checked by ablation instead of assuming it.
