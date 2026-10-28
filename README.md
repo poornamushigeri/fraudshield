@@ -1,3 +1,5 @@
+
+![CI](https://github.com/poornamushigeri/fraudshield/actions/workflows/ci.yml/badge.svg)
 # FraudShield
 
 Cost-aware account-opening fraud risk scoring.
