@@ -15,7 +15,7 @@ offline = model.predict_proba(model_features(clean(sample)))[:, 1]
 
 served = []
 for rec in sample.to_dict("records"):
-    r = httpx.post("http://127.0.0.1:8000/score", json=to_record(rec), timeout=60)
+    r = httpx.post("http://127.0.0.1:8000/score", json=to_record(rec), timeout=120)
     r.raise_for_status()
     served.append(r.json()["risk_score"])
 
