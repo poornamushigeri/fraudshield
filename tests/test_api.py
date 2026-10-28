@@ -101,3 +101,25 @@ def test_rejected_requests_are_not_stored(client, sample):
     assert client.post("/score", json={**rec, "payment_type": "ZZ"}).status_code == 422
     with Session(make_engine()) as s:
         assert s.query(Prediction).count() == before
+
+def test_an_outage_costs_one_slow_request_not_every_request(client, sample, monkeypatch):
+    calls = []
+
+    def failing_save(*args, **kwargs):
+        calls.append(1)
+        raise RuntimeError("database down")
+
+    monkeypatch.setattr("src.api.save_prediction", failing_save)
+    monkeypatch.setattr(app.state, "store_down_until", 0.0)   # restored to its old value after the test
+    rec = to_record(sample.to_dict("records")[0])
+
+    first = client.post("/score", json=rec)
+    second = client.post("/score", json=rec)
+    for r in (first, second):
+        assert r.status_code == 200                      # the analyst still gets a score
+        assert r.json()["prediction_id"] is None         # and the missing record is visible
+    assert len(calls) == 1                               # the second request did not try to save
+
+    monkeypatch.setattr(app.state, "store_down_until", 0.0)   # the pause is over
+    client.post("/score", json=rec)
+    assert len(calls) == 2                               # saving is tried again

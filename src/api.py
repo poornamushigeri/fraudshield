@@ -14,8 +14,10 @@ from src.schemas import Application, to_frame
 from src.serve import MODEL_DIR, load_model, prepare
 
 log = logging.getLogger("fraudshield")
+import time
 
 VERSION = "v1"
+STORE_RETRY_SECONDS = 30   # after a failed save, skip saving for this long
 NOTE = ("risk_score ranks applications and is not a calibrated probability of fraud. "
         "Reasons are returned only for medium and high bands; they show which inputs pushed "
         "this score up, not what caused it. "
@@ -40,6 +42,7 @@ async def lifespan(app: FastAPI):
     app.state.model, app.state.meta, app.state.cutoffs = model, meta, cutoffs
     app.state.explainer = Explainer.load(model, VERSION)
     app.state.engine = engine
+    app.state.store_down_until = 0.0
     yield
     engine.dispose()
 
@@ -92,13 +95,19 @@ def score(application: Application):
 
     # If storing fails, the analyst still gets the score, but the failure is logged and
     # prediction_id is null so a missing record is visible, not silent.
+    # After a failure we skip saving for a short while: an outage then costs one slow
+    # request, not every request.
     prediction_id = None
-    try:
-        prediction_id = save_prediction(
-            app.state.engine, model_version=app.state.meta["version"], risk_score=s, risk_band=b,
-            review_recommended=(b == "high"), application=application.model_dump(), reasons=reasons)
-    except Exception:
-        log.exception("could not store prediction")
+    if time.monotonic() >= app.state.store_down_until:
+        try:
+            prediction_id = save_prediction(
+                app.state.engine, model_version=app.state.meta["version"], risk_score=s, risk_band=b,
+                review_recommended=(b == "high"), application=application.model_dump(), reasons=reasons)
+        except Exception:
+            app.state.store_down_until = time.monotonic() + STORE_RETRY_SECONDS
+            log.exception("could not store prediction; pausing storage for %s s", STORE_RETRY_SECONDS)
+    else:
+        log.warning("prediction not stored: database marked unavailable")
 
     return ScoreResponse(
         model_version=app.state.meta["version"], prediction_id=prediction_id, risk_score=s,

@@ -56,7 +56,10 @@ class Prediction(Base):
 
 
 def make_engine(url: str | None = None):
-    engine = create_engine(url or os.environ.get("DATABASE_URL", DEFAULT_URL), pool_pre_ping=True)
+    url = url or os.environ.get("DATABASE_URL", DEFAULT_URL)
+    # give up on an unreachable PostgreSQL after 2 s instead of waiting indefinitely
+    kwargs = {"connect_args": {"connect_timeout": 2}} if url.startswith("postgresql") else {}
+    engine = create_engine(url, pool_pre_ping=True, **kwargs)
     if engine.dialect.name == "sqlite":  # SQLite ignores foreign keys unless told otherwise
         @event.listens_for(engine, "connect")
         def _fk_on(dbapi_conn, _):
